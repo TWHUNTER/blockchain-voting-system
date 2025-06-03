@@ -1,0 +1,43 @@
+{
+    "candidates": {
+        "1": {
+            "name": "juan"
+        },
+        "2": {
+            "name": "cbastian"
+        },
+        "3": {
+            "name": "keven"
+        },
+        "4": {
+            "name": "luis"
+        },
+        "5": {
+            "name": "ichia"
+        }
+    },
+    "voter_tokens": {
+        "1": {
+            "token": "68fd187b-f551-4a98-ab1f-646e716d595b",
+            "voted": true
+        },
+        "2": {
+            "token": "c01fefca-32d6-4d61-9885-96f0ae1c161d",
+            "voted": false
+        },
+        "3": {
+            "token": "53174415-1ac0-4e10-96ea-3a115ad6370c",
+            "voted": false
+        },
+        "4": {
+            "token": "420111c0-b8a8-49d9-bca7-91c7d3093b9a",
+            "voted": false
+        }
+    },
+    "system_status": {
+        "1": {
+            "setting": "voting_status",
+            "is_open": true
+        }
+    }
+}

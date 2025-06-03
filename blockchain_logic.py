@@ -34,11 +34,11 @@ class Block:
 
 class Blockchain:
     def __init__(self, difficulty=2):
-        self.chain = [self.create_genesis_block()]
+        self.chain = [self.create_keven_block()]
         self.difficulty = difficulty
         self.pending_votes = []
 
-    def create_genesis_block(self):
+    def create_keven_block(self):
         return Block(0, time.time(), "Keven Block", "0")
 
     def get_latest_block(self):

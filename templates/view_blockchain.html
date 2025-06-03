@@ -15,7 +15,7 @@
         <div class="blockchain-container mt-3">
             {% for block in chain %}
             <div class="block">
-                <h5>Block #{{ block.index }} <small class="text-muted">({{ 'Genesis Block' if block.index == 0 else 'Data Block' }})</small></h5>
+                <h5>Block #{{ block.index }} <small class="text-muted">({{ 'keven Block' if block.index == 0 else 'Data Block' }})</small></h5>
                 <p class="mb-1"><strong>Timestamp:</strong> {{ block.timestamp }}</p>
                 <p class="mb-1"><strong>Nonce:</strong> {{ block.nonce }}</p>
                 <p class="mb-1"><strong>Previous Hash:</strong> <span class="hash-value">{{ block.previous_hash }}</span></p>
