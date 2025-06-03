@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Election Results{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header bg-info text-white">
+        <h1 class="h3 mb-0">Election Results</h1>
+    </div>
+    <div class="card-body">
+        <div style="width: 80%; margin: auto;">
+            <canvas id="voteChart"></canvas>
+        </div>
+        <hr>
+        <h4>Detailed Tally (from Mined Blocks):</h4>
+        <div id="tallyTableContainer">
+            <!-- Table will be populated by JavaScript if data exists -->
+            <p id="noVotesMessage" class="text-muted" style="display: none;">No votes have been tallied yet from mined blocks.</p>
+        </div>
+    </div>
+    <div class="card-footer text-muted">
+        <small>Chain validity:
+            <span id="chainStatusBadge" class="badge">
+                <!-- Status will be updated by JS -->
+            </span>
+        </small>
+        <button onclick="fetchAndUpdateResults()" class="btn btn-sm btn-secondary float-right">Refresh Results</button>
+    </div>
+</div>
+
+<script>
+    let voteChartInstance = null; // To store the chart instance
+
+    function createOrUpdateChart(labels, data) {
+        const ctx = document.getElementById('voteChart').getContext('2d');
+
+        if (voteChartInstance) {
+            voteChartInstance.data.labels = labels;
+            voteChartInstance.data.datasets[0].data = data;
+            voteChartInstance.update();
+        } else {
+            voteChartInstance = new Chart(ctx, {
+                type: 'bar', // or 'pie', 'line', etc.
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '# of Votes',
+                        data: data,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.2)',
+                            'rgba(54, 162, 235, 0.2)',
+                            'rgba(255, 206, 86, 0.2)',
+                            'rgba(75, 192, 192, 0.2)',
+                            'rgba(153, 102, 255, 0.2)',
+                            'rgba(255, 159, 64, 0.2)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1 // Ensure y-axis shows whole numbers for votes
+                            }
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: true, // Adjust as needed
+                    plugins: {
+                        legend: {
+                            display: true, // Set to false if you have many candidates and it clutters
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Live Vote Count'
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    function updateTallyTable(labels, data) {
+        const container = document.getElementById('tallyTableContainer');
+        const noVotesMsg = document.getElementById('noVotesMessage');
+        container.innerHTML = ''; // Clear previous table
+
+        if (labels.length === 0) {
+            noVotesMsg.style.display = 'block';
+            return;
+        }
+        noVotesMsg.style.display = 'none';
+
+        const table = document.createElement('table');
+        table.className = 'table table-striped table-hover';
+        const thead = table.createTHead();
+        thead.className = 'thead-dark';
+        let row = thead.insertRow();
+        let th1 = document.createElement('th');
+        th1.textContent = 'Candidate';
+        row.appendChild(th1);
+        let th2 = document.createElement('th');
+        th2.textContent = 'Votes';
+        row.appendChild(th2);
+
+        const tbody = table.createTBody();
+        for (let i = 0; i < labels.length; i++) {
+            let tr = tbody.insertRow();
+            let td1 = tr.insertCell();
+            td1.textContent = labels[i];
+            let td2 = tr.insertCell();
+            td2.textContent = data[i];
+        }
+        container.appendChild(table);
+    }
+
+    function updateChainStatus(isValid) {
+        const badge = document.getElementById('chainStatusBadge');
+        badge.textContent = isValid ? 'Valid' : 'INVALID - TAMPERED!';
+        badge.className = 'badge ' + (isValid ? 'badge-success' : 'badge-danger');
+    }
+
+
+    function fetchAndUpdateResults() {
+        fetch("{{ url_for('results_data_api') }}")
+            .then(response => response.json())
+            .then(apiData => {
+                createOrUpdateChart(apiData.labels, apiData.data);
+                updateTallyTable(apiData.labels, apiData.data);
+                updateChainStatus(apiData.chain_valid);
+            })
+            .catch(error => console.error('Error fetching results data:', error));
+    }
+
+    // Fetch data initially when the page loads
+    document.addEventListener('DOMContentLoaded', fetchAndUpdateResults);
+
+    // Optional: Auto-refresh the chart every N seconds
+    // setInterval(fetchAndUpdateResults, 10000); // Refresh every 10 seconds
+</script>
+{% endblock %}

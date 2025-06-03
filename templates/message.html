@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Message{% endblock %}
+{% block content %}
+<h1>{{ message_title }}</h1>
+<p>{{ message_body }}</p>
+<p><a href="{{ return_url or url_for('admin_panel') }}">Go Back</a></p>
+{% endblock %}

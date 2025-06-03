@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Blockchain Explorer{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header bg-secondary text-white">
+        <h1 class="h3 mb-0">Blockchain Explorer</h1>
+    </div>
+    <div class="card-body">
+        <p>Total Blocks: <span class="badge badge-pill badge-primary">{{ chain | length }}</span></p>
+        <p>Chain Validity:
+            <span class="badge badge-{{ 'success' if chain_valid_status == 'Valid' else 'danger' }}">
+                {{ chain_valid_status }}
+            </span>
+        </p>
+        <div class="blockchain-container mt-3">
+            {% for block in chain %}
+            <div class="block">
+                <h5>Block #{{ block.index }} <small class="text-muted">({{ 'Genesis Block' if block.index == 0 else 'Data Block' }})</small></h5>
+                <p class="mb-1"><strong>Timestamp:</strong> {{ block.timestamp }}</p>
+                <p class="mb-1"><strong>Nonce:</strong> {{ block.nonce }}</p>
+                <p class="mb-1"><strong>Previous Hash:</strong> <span class="hash-value">{{ block.previous_hash }}</span></p>
+                <p class="mb-1"><strong>Hash:</strong> <span class="hash-value">{{ block.hash }}</span></p>
+                <strong>Data:</strong>
+                <pre>{{ block.data | tojson(indent=2) }}</pre>
+            </div>
+            {% if not loop.last %}
+            <div class="chain-arrow">↓</div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
