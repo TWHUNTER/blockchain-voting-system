@@ -8,27 +8,31 @@
                 <h1 class="h3 mb-0">Cast Your Vote</h1>
             </div>
             <div class="card-body">
-                {% if not candidates %}
+                {% if voting_closed %}
+                    <div class="alert alert-danger" role="alert">
+                        Voting is currently closed. No new votes can be submitted at this time.
+                    </div>
+                {% elif not candidates %}
                     <div class="alert alert-warning" role="alert">
                         No candidates have been set up for this election yet. Please check back later or contact an administrator.
                     </div>
                 {% else %}
                 <form method="POST" action="{{ url_for('submit_vote') }}">
-                    <div class="form-group">
-                        <label for="voter_token">Your Voter Token (Wallet ID):</label>
+                    <div class="form-group mb-3">
+                        <label for="voter_token" class="form-label">Your Voter Token (Wallet ID):</label>
                         <input type="text" class="form-control" id="voter_token" name="voter_token" required placeholder="Enter your unique token">
                     </div>
 
-                    <div class="form-group">
-                        <label for="candidate">Choose Candidate:</label>
-                        <select class="form-control" id="candidate" name="candidate" required>
+                    <div class="form-group mb-3">
+                        <label for="candidate" class="form-label">Choose Candidate:</label>
+                        <select class="form-select" id="candidate" name="candidate" required> {# Changed form-control to form-select for BS5 selects #}
                             <option value="" disabled selected>-- Select a Candidate --</option>
                             {% for candidate in candidates %}
                             <option value="{{ candidate }}">{{ candidate }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-success btn-block">Submit Vote</button>
+                    <button type="submit" class="btn btn-success w-100">Submit Vote</button>
                 </form>
                 {% endif %}
             </div>

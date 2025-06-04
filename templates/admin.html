@@ -1,92 +1,127 @@
 {% extends "base.html" %}
-{% block title %}Admin Panel{% endblock %}
+{% block title %}Admin Panel - Voting System{% endblock %}
 {% block content %}
-<div class="jumbotron p-4 p-md-5 text-white rounded bg-dark">
-    <div class="col-md-6 px-0">
-        <h1 class="display-4 font-italic">Admin Dashboard</h1>
-        <p class="lead my-3">Manage candidates, voter tokens, and blockchain operations.</p>
+<div class="container mt-4">
+    <div class="p-4 p-md-5 mb-4 text-white rounded bg-dark">
+        <div class="col-md-8 px-0">
+            <h1 class="display-4 fst-italic">Admin Dashboard</h1>
+            <p class="lead my-3">Manage candidates, voter tokens, voting period, and blockchain operations.</p>
+        </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h2>Add Candidate</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4 rounded-3 shadow-sm">
+                <div class="card-header py-3">
+                    <h4 class="my-0 fw-normal">Manage Candidates</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Add New Candidate</h5>
+                    <form method="POST" action="{{ url_for('add_candidate') }}" class="mb-3">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="candidate_name" name="candidate_name" placeholder="Candidate Name" required>
+                            <label for="candidate_name">Candidate Name</label>
+                        </div>
+                        <button type="submit" class="w-100 btn btn-lg btn-primary">Add Candidate</button>
+                    </form>
+                    <hr>
+                    <h5>Current Candidates</h5>
+                    {% if candidates %}
+                    <ul class="list-group">
+                        {% for candidate_item in candidates %} {# Renamed to avoid conflict with form field #}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ candidate_item }}
+                            <form method="POST" action="{{ url_for('remove_candidate', candidate_name=candidate_item) }}" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete {{ candidate_item }}?');">Delete</button>
+                            </form>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted">No candidates added yet.</p>
+                    {% endif %}
+                </div>
             </div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('add_candidate') }}">
-                    <div class="form-group">
-                        <label for="candidate_name">Candidate Name:</label>
-                        <input type="text" class="form-control" id="candidate_name" name="candidate_name" required>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4 rounded-3 shadow-sm">
+                <div class="card-header py-3">
+                    <h4 class="my-0 fw-normal">Manage Voter Tokens</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Generate Voter Token</h5>
+                    <form method="POST" action="{{ url_for('generate_token') }}" class="mb-3">
+                        <button type="submit" class="w-100 btn btn-lg btn-success">Generate New Token</button>
+                    </form>
+                    {% if new_token %}
+                    <div class="alert alert-success mt-3" role="alert">
+                        <strong>New Token Generated:</strong> <span class="token-display">{{ new_token }}</span>
+                        <p><small>(Share this token securely with a voter)</small></p>
                     </div>
-                    <button type="submit" class="btn btn-primary">Add Candidate</button>
-                </form>
-            </div>
-        </div>
-
-        <div class="card mt-4">
-            <div class="card-header">
-                <h2>Generate Voter Token</h2>
-            </div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('generate_token') }}">
-                    <button type="submit" class="btn btn-success">Generate New Token</button>
-                </form>
-                {% if new_token %}
-                <p class="mt-3"><strong>New Token Generated:</strong> <span class="token-display">{{ new_token }}</span></p>
-                <p><small>(Share this token securely with a voter)</small></p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h2>Current Candidates</h2>
-            </div>
-            <div class="card-body">
-                {% if candidates %}
-                <ul class="list-group">
-                    {% for candidate in candidates %}
-                    <li class="list-group-item">{{ candidate }}</li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="text-muted">No candidates added yet.</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="card mt-4">
-            <div class="card-header">
-                <h2>Unused Voter Tokens</h2>
-            </div>
-            <div class="card-body">
-                {% if unused_tokens %}
-                <ul class="list-group list-group-flush">
-                    {% for token in unused_tokens %}
-                    <li class="list-group-item p-2"><span class="token-display">{{ token }}</span></li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="text-muted">No unused tokens available or all tokens have been used.</p>
-                {% endif %}
+                    {% endif %}
+                    <hr>
+                    <h5>Unused Voter Tokens</h5>
+                    {% if unused_tokens %}
+                    <div style="max-height: 200px; overflow-y: auto;">
+                        <ul class="list-group list-group-flush">
+                            {% for token in unused_tokens %}
+                            <li class="list-group-item p-2"><span class="token-display">{{ token }}</span></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No unused tokens available or all tokens have been used.</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<hr class="my-4">
+    <hr class="my-4">
 
-<div class="card mt-4">
-    <div class="card-header">
-        <h2>System Status</h2>
-    </div>
-    <div class="card-body">
-        <p>Auto-mining is active. Pending votes will be processed approximately every {{ auto_mine_interval }} seconds.</p>
-        <p>Current pending votes: <span class="badge badge-primary">{{ pending_votes_count }}</span></p>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4 rounded-3 shadow-sm">
+                <div class="card-header py-3">
+                    <h4 class="my-0 fw-normal">Voting Period Control</h4>
+                </div>
+                <div class="card-body">
+                    <p>Current Voting Status: <strong>{% if voting_is_open %}OPEN{% else %}CLOSED{% endif %}</strong></p>
+                    <form method="POST" action="{{ url_for('toggle_voting_status') }}" class="mb-3">
+                        {% if voting_is_open %}
+                            <button type="submit" class="w-100 btn btn-lg btn-danger" onclick="return confirm('Are you sure you want to CLOSE voting?');">Close Voting</button>
+                        {% else %}
+                            <button type="submit" class="w-100 btn btn-lg btn-success" onclick="return confirm('Are you sure you want to OPEN voting?');">Open Voting</button>
+                        {% endif %}
+                    </form>
+                     <p class="text-muted small">Opening voting allows users to cast votes. Closing voting prevents further votes.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4 rounded-3 shadow-sm">
+                <div class="card-header py-3">
+                    <h4 class="my-0 fw-normal">System Status</h4>
+                </div>
+                <div class="card-body">
+                    <p>Auto-mining is <strong>{{ 'active' if auto_mine_interval else 'inactive' }}</strong>.
+                        {% if auto_mine_interval %}
+                        Pending votes will be processed approximately every {{ auto_mine_interval }} seconds.
+                        {% endif %}
+                    </p>
+                    <p>Current pending votes: <span class="badge bg-primary rounded-pill">{{ pending_votes_count }}</span></p>
+                    </div>
+            </div>
+        </div>
     </div>
 </div>
+
+{% block scripts %}
+{{ super() }}
+<script>
+// Client-side JavaScript can be added here if needed for enhanced interactivity.
+</script>
+{% endblock %}
 {% endblock %}
