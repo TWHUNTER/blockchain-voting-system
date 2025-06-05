@@ -17,26 +17,94 @@
                         No candidates have been set up for this election yet. Please check back later or contact an administrator.
                     </div>
                 {% else %}
-                <form method="POST" action="{{ url_for('submit_vote') }}">
-                    <div class="form-group mb-3">
-                        <label for="voter_token" class="form-label">Your Voter Token (Wallet ID):</label>
-                        <input type="text" class="form-control" id="voter_token" name="voter_token" required placeholder="Enter your unique token">
+                    <div id="metamask-area" class="mb-3">
+                        <button id="connectWalletBtn" class="btn btn-info w-100 mb-2">Connect with MetaMask</button>
+                        <div id="wallet-info" class="alert alert-light" style="display:none;">
+                            Connected Wallet: <strong id="walletAddress"></strong>
+                        </div>
                     </div>
 
-                    <div class="form-group mb-3">
-                        <label for="candidate" class="form-label">Choose Candidate:</label>
-                        <select class="form-select" id="candidate" name="candidate" required> {# Changed form-control to form-select for BS5 selects #}
-                            <option value="" disabled selected>-- Select a Candidate --</option>
-                            {% for candidate in candidates %}
-                            <option value="{{ candidate }}">{{ candidate }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-success w-100">Submit Vote</button>
-                </form>
+                    <form method="POST" action="{{ url_for('submit_vote') }}" id="voteForm" style="display:none;">
+                        <input type="hidden" id="wallet_address_input" name="wallet_address">
+
+                        <div class="form-group mb-3">
+                            <label for="candidate" class="form-label">Choose Candidate:</label>
+                            <select class="form-select" id="candidate" name="candidate" required>
+                                <option value="" disabled selected>-- Select a Candidate --</option>
+                                {% for candidate in candidates %}
+                                <option value="{{ candidate }}">{{ candidate }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Submit Vote</button>
+                    </form>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', (event) => {
+    const connectWalletBtn = document.getElementById('connectWalletBtn');
+    const voteForm = document.getElementById('voteForm');
+    const walletInfoDiv = document.getElementById('wallet-info');
+    const walletAddressSpan = document.getElementById('walletAddress');
+    const walletAddressInput = document.getElementById('wallet_address_input');
+    let currentAccount = null;
+
+    if (typeof window.ethereum !== 'undefined') {
+        console.log('MetaMask is installed!');
+
+        connectWalletBtn.addEventListener('click', async () => {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                handleAccountsChanged(accounts);
+            } catch (error) {
+                console.error("Error connecting to MetaMask:", error);
+                if (error.code === 4001) {
+                    alert("Connection to MetaMask was rejected. Please connect to MetaMask to vote.");
+                } else {
+                    alert("Could not connect to MetaMask. See console for details.");
+                }
+            }
+        });
+
+        window.ethereum.on('accountsChanged', handleAccountsChanged);
+
+        // Intenta reconectar si ya estaba conectado (opcional, puede ser más explícito requerir click)
+        // window.ethereum.request({ method: 'eth_accounts' })
+        //   .then(handleAccountsChanged)
+        //   .catch(err => console.error(err));
+
+    } else {
+        connectWalletBtn.textContent = 'MetaMask not detected!';
+        connectWalletBtn.disabled = true;
+        alert('MetaMask is not installed. Please install MetaMask to vote.');
+    }
+
+    function handleAccountsChanged(accounts) {
+        if (accounts.length === 0) {
+            console.log('Please connect to MetaMask.');
+            currentAccount = null;
+            voteForm.style.display = 'none';
+            walletInfoDiv.style.display = 'none';
+            connectWalletBtn.disabled = false;
+            connectWalletBtn.textContent = 'Connect with MetaMask';
+        } else {
+            currentAccount = accounts[0];
+            walletAddressSpan.textContent = currentAccount;
+            walletAddressInput.value = currentAccount; // Establece la dirección en el input oculto
+            walletInfoDiv.style.display = 'block';
+            voteForm.style.display = 'block';
+            connectWalletBtn.disabled = true; // Deshabilita el botón una vez conectado
+            connectWalletBtn.textContent = 'Wallet Connected';
+            console.log('Wallet connected:', currentAccount);
+        }
+    }
+});
+</script>
 {% endblock %}

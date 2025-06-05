@@ -7,6 +7,7 @@ import time
 import threading
 from datetime import datetime
 import secrets
+import moralis
 
 # --- TinyDB Setup ---
 from tinydb import TinyDB, Query, where # Added 'where'
@@ -121,12 +122,21 @@ def submit_vote():
         flash("Voting is currently closed. No new votes can be submitted.", 'warning')
         return redirect(url_for('user_vote_page'))
 
-    token = request.form.get('voter_token', '').strip()
+    # ANTES: token = request.form.get('voter_token', '').strip()
+    wallet_address = request.form.get('wallet_address', '').strip() # CAMBIO AQUÍ
     selected_candidate = request.form.get('candidate')
 
-    if not token:
-        flash("Voter token is required.", 'danger')
+    # ANTES: if not token:
+    if not wallet_address: # CAMBIO AQUÍ
+        # Esto no debería ocurrir si el frontend funciona bien, pero es una buena validación
+        flash("Wallet address is required. Please connect your MetaMask wallet.", 'danger')
         return redirect(url_for('user_vote_page'))
+    
+    # Validar formato de dirección de Ethereum (opcional pero recomendado)
+    if not (wallet_address.startswith('0x') and len(wallet_address) == 42):
+        flash(f"Invalid wallet address format: {wallet_address}", 'danger')
+        return redirect(url_for('user_vote_page'))
+
     if not selected_candidate:
         flash("Please select a candidate.", 'danger')
         return redirect(url_for('user_vote_page'))
@@ -137,17 +147,37 @@ def submit_vote():
         flash(f"Invalid candidate '{selected_candidate}'. Please select from the list.", 'danger')
         return redirect(url_for('user_vote_page'))
 
-    if token not in voter_tokens:
-        flash("Invalid voter token. Please check your token.", 'danger')
-    elif voter_tokens[token] is True:
-        flash("This voter token has already been used to cast a vote.", 'warning')
+    # ANTES: if token not in voter_tokens:
+    if wallet_address not in voter_tokens: # CAMBIO AQUÍ
+        # En este nuevo modelo, si la dirección no está, es un nuevo votante.
+        # Podrías tener una lista de direcciones pre-aprobadas si es necesario,
+        # pero para este caso, cualquier billetera conectada puede votar una vez.
+        # Considera si quieres que la dirección se registre aquí por primera vez
+        # o si el admin debe pre-registrarla.
+        # Para este ejemplo, asumimos que una nueva dirección puede votar.
+        voter_tokens[wallet_address] = False # Registrar y marcar como no votado inicialmente
+        voter_tokens_table.insert({'token': wallet_address, 'voted': False}) # CAMBIO 'token' por 'wallet_address' conceptualmente
+                                                                            # pero el campo en la BD puede seguir siendo 'token' si no quieres migrar
+                                                                            # o cambiarlo a 'wallet_address'
+    
+    # ANTES: elif voter_tokens[token] is True:
+    if voter_tokens[wallet_address] is True: # CAMBIO AQUÍ
+        flash("This wallet address has already been used to cast a vote.", 'warning')
     else:
-        hashed_token = hash_string(token)
-        blockchain.add_vote_to_pending(voter_token_hashed=hashed_token, candidate_name=selected_candidate)
-        voter_tokens[token] = True
+        # El hash_string ahora aplicaría a la wallet_address si quieres mantener el hashing
+        # Las direcciones de wallet ya son identificadores únicos y públicos.
+        # Hashear podría ser para consistencia si antes hasheabas los UUIDs.
+        hashed_wallet_address = hash_string(wallet_address) # CAMBIO AQUÍ
+        
+        blockchain.add_vote_to_pending(voter_token_hashed=hashed_wallet_address, candidate_name=selected_candidate) # CAMBIO AQUÍ
+        
+        voter_tokens[wallet_address] = True # CAMBIO AQUÍ
         TokenQuery = Query()
-        voter_tokens_table.update({'voted': True}, TokenQuery.token == token)
-        flash(f"Vote for '{selected_candidate}' cast successfully! Your vote will be automatically processed soon.", 'success')
+        # ANTES: voter_tokens_table.update({'voted': True}, TokenQuery.token == token)
+        voter_tokens_table.update({'voted': True}, TokenQuery.token == wallet_address) # CAMBIO AQUÍ (asumiendo que el campo en BD sigue siendo 'token')
+                                                                                  # Si cambiaste el campo a 'wallet_address' en la BD, usa where('wallet_address') == wallet_address
+        
+        flash(f"Vote for '{selected_candidate}' from wallet {wallet_address[:6]}...{wallet_address[-4:]} cast successfully! Your vote will be processed soon.", 'success')
         return redirect(url_for('view_results'))
 
     return redirect(url_for('user_vote_page'))
